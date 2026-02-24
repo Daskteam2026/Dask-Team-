@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Leaves</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Top Navbar -->
+<nav class="navbar">
+  <div class="nav-left">
+    <h2 class="logo">DASK</h2>
+    <a href="index.html">Dashboard</a>
+    <a href="attendance.html">Attendance</a>
+    <a href="leaves.html" class="active">Leaves</a>
+    <a href="reports.html">Reports</a>
+  </div>
+
+  <div class="nav-right">
+    <div class="profile">
+      <span>Suraj</span>
+      <div class="avatar">S</div>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+  <h1>Leave Management</h1>
+
+  <!-- Leave Form -->
+  <div class="leave-form">
+    <h2>Apply for Leave</h2>
+
+    <label>Leave Type</label>
+    <select id="leaveType">
+      <option>Casual Leave</option>
+      <option>Sick Leave</option>
+      <option>Work From Home</option>
+    </select>
+
+    <label>From Date</label>
+    <input type="date" id="fromDate">
+
+    <label>To Date</label>
+    <input type="date" id="toDate">
+
+    <label>Reason</label>
+    <textarea id="reason"></textarea>
+
+    <button class="btn apply" onclick="applyLeave()">Apply Leave</button>
+  </div>
+
+  <!-- Leave History -->
+  <h2>Leave History</h2>
+  <table class="attendance-table">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>From</th>
+        <th>To</th>
+        <th>Reason</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="leaveTable"></tbody>
+  </table>
+
+</div>
+
+<script src="leaves.js"></script>
+</body>
+</html>
