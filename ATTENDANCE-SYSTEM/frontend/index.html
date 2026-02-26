@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Smart Attendance System</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<!-- Top Navigation -->
+<nav class="navbar">
+  <div class="nav-left">
+    <h2 class="logo">DASK</h2>
+    <a href="/index.html" class="active">Dashboard</a>
+    <a href="/attendance.html">Attendance</a>
+    <a href="/leaves.html">Leaves</a>
+    <a href="/reports.html">Reports</a>
+  </div>
+
+  <div class="nav-right">
+    <div class="profile">
+      <span id="navUser"></span>
+     <div class="avatar" id="navAvatar">S</div>
+    </div>
+  </div>
+</nav>
+
+<!-- Main Content -->
+<div class="container">
+  <h1>Dashboard</h1>
+
+<div class="cards">
+
+  <div class="card">
+    <h3>Total Employees</h3>
+    <p id="empCount">25</p>
+  </div>
+
+  <div class="card">
+    <h3>Present Today</h3>
+    <p id="presentCount">18</p>
+  </div>
+
+  <div class="card">
+    <h3>On Leave</h3>
+    <p id="leaveCount">4</p>
+  </div>
+
+  <div class="card">
+    <h3>Late Entries</h3>
+    <p id="lateCount">3</p>
+  </div>
+
+</div>
+
+<div class="charts-container">
+
+  <div class="chart-box">
+    <h3>Weekly Attendance</h3>
+    <canvas id="attendanceChart"></canvas>
+  </div>
+
+  <div class="chart-box">
+    <h3>Leave Distribution</h3>
+    <canvas id="leaveChart"></canvas>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/static/js/dashboard.js"></script>
+</div>
+
+<script src="/static/js/main.js"></script>
+<script src="/static/js/user.js"></script>
+</body>
+</html>
