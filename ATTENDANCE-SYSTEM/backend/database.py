@@ -10,6 +10,9 @@ class Employee(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False)
     department = Column(String, nullable=False)
+    email = Column(String, unique=True, nullable=False)
+    password_hash = Column(String, nullable=False)
+    role = Column(String, default="employee")  # "admin" or "employee"
     # automatically set to today's date when new employee is created
     join_date = Column(Date, nullable=False, default=_date.today)
 
@@ -22,7 +25,10 @@ class Attendance(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     employee_id = Column(Integer, ForeignKey("employees.id"))
     date = Column(Date, nullable=False)
+    check_in = Column(String, nullable=True)
+    check_out = Column(String, nullable=True)
     present = Column(Boolean, default=True)
+    status = Column(String, default="Present")  # Present, Absent, Late, Leave
 
     employee = relationship("Employee", back_populates="attendances")
 
@@ -30,8 +36,11 @@ class Leave(Base):
     __tablename__ = "leaves"
     id = Column(Integer, primary_key=True, autoincrement=True)
     employee_id = Column(Integer, ForeignKey("employees.id"))
-    date = Column(Date, nullable=False)
+    leave_type = Column(String, nullable=False)  # Casual Leave, Sick Leave, Earned Leave
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=False)
     reason = Column(String)
+    status = Column(String, default="Pending")  # Pending, Approved, Rejected, Cancelled
 
     employee = relationship("Employee", back_populates="leaves")
 
@@ -58,3 +67,7 @@ def get_db():
         yield db
     finally:
         db.close()
+
+# Create tables
+Base.metadata.create_all(bind=engine)
+

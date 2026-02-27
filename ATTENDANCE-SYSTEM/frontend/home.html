@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Smart Attendance System</title>
-  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="landing-body">
 
@@ -37,7 +36,7 @@
 
   <!-- Image will go here -->
   <div class="hero-right">
-    <img src="/static/images/vlg.jpeg" alt="dashboard image">
+    <img src="images/vlg.jpeg" alt="dashboard image">
   </div>
 
 </section>
@@ -55,7 +54,7 @@
 </div>
 
     <!-- Login Form -->
-    <form id="loginForm" onsubmit="event.preventDefault(); login();">
+    <form id="loginForm">
       <h2>Login</h2>
       <input type="email" id="loginEmail" placeholder="Email" required>
       <input type="password" id="loginPass" placeholder="Password" required>
@@ -64,18 +63,14 @@
     </form>
 
     <!-- Register Form -->
-    <form id="registerForm" style="display:none;" onsubmit="event.preventDefault(); register();">
+    <form id="registerForm" style="display:none;">
       <h2>Register</h2>
       <input type="text" id="regName" placeholder="Full Name" required>
       <input type="email" id="regEmail" placeholder="Email" required>
       <input type="password" id="regPass" placeholder="Password" required>
-      <select id="regRole">
-        <option value="employee">Employee</option>
-        <option value="admin">Admin</option>
-      </select>
 
-      <!-- department field for new employee registration -->
-      <select id="regDept" required>
+      <select id="regDept">
+        <option value="General">General</option>
         <option value="Engineering">Engineering</option>
         <option value="Design">Design</option>
         <option value="Marketing">Marketing</option>
@@ -90,7 +85,9 @@
   </div>
 </div>
 
-<script src="/static/js/auth.js"></script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
 
 </body>
 </html>
+

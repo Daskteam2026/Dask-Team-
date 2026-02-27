@@ -1,63 +1,57 @@
-from sqlalchemy.orm import sessionmaker
-from database import engine, Base, Employee, Attendance, Leave, Salary
-from datetime import date
-import random
+from database import SessionLocal, engine, Base, Employee
+import hashlib
 
-Session = sessionmaker(bind=engine)
-session = Session()
+def hash_password(password: str) -> str:
+    return hashlib.sha256(password.encode()).hexdigest()
 
-def seed_employees():
-    # generate 20 sample employees with unique names
-    departments = ["Engineering", "Design", "Marketing", "HR", "Finance"]
-    base_date = date(2025, 1, 1)
-    employees = []
-    for i in range(1, 21):
-        name = f"Employee {i}"
-        dept = random.choice(departments)
-        join = base_date.replace(month=((i - 1) % 12) + 1, day=((i - 1) % 28) + 1)
-        employees.append(Employee(name=name, department=dept, join_date=join))
-    session.add_all(employees)
-    session.commit()
-
-def seed_attendance():
-    employees = session.query(Employee).all()
-    for emp in employees:
-        for i in range(1, 31):
-            day = date(2026, 1, i)
-            present = random.choice([True] * 4 + [False])  # 80% chance present
-            session.add(Attendance(employee_id=emp.id, date=day, present=present))
-    session.commit()
-
-def seed_leaves():
-    employees = session.query(Employee).all()
-    for emp in employees:
-        leave_days = random.randint(0, 3)
-        for _ in range(leave_days):
-            leave_date = date(2026, 1, random.randint(1, 30))
-            session.add(Leave(employee_id=emp.id, date=leave_date, reason="Personal"))
-    session.commit()
-
-def seed_salaries():
-    employees = session.query(Employee).all()
-    for emp in employees:
-        base_salary = 30000.0
-        days_present = session.query(Attendance).filter_by(employee_id=emp.id, present=True).count()
-        salary = base_salary * (days_present / 30)
-        session.add(Salary(employee_id=emp.id, month="2026-01", amount=round(salary, 2)))
-    session.commit()
-
-def run_seed():
-    # remove existing tables to start fresh
-    Base.metadata.drop_all(engine)
-    Base.metadata.create_all(engine)
-    seed_employees()
-    seed_attendance()
-    seed_leaves()
-    seed_salaries()
+def seed_data():
+    # Create tables
+    Base.metadata.create_all(bind=engine)
+    
+    db = SessionLocal()
+    
+    try:
+        # Check if admin already exists
+        admin = db.query(Employee).filter(Employee.email == "admin@dask.com").first()
+        
+        if not admin:
+            # Create admin user
+            admin = Employee(
+                name="Admin",
+                email="admin@dask.com",
+                password_hash=hash_password("admin123"),
+                department="Administration",
+                role="admin"
+            )
+            db.add(admin)
+            print("Admin user created")
+        
+        # Check if there are any employees
+        count = db.query(Employee).count()
+        
+        if count == 1:  # Only admin
+            # Create sample employees
+            employees = [
+                Employee(name="John Smith", email="john@dask.com", password_hash=hash_password("password123"), department="Engineering", role="employee"),
+                Employee(name="Jane Doe", email="jane@dask.com", password_hash=hash_password("password123"), department="Design", role="employee"),
+                Employee(name="Bob Wilson", email="bob@dask.com", password_hash=hash_password("password123"), department="Marketing", role="employee"),
+                Employee(name="Alice Brown", email="alice@dask.com", password_hash=hash_password("password123"), department="HR", role="employee"),
+            ]
+            
+            for emp in employees:
+                db.add(emp)
+            
+            print(f"Created {len(employees)} sample employees")
+        
+        db.commit()
+        print("Database seeded successfully!")
+        
+    except Exception as e:
+        print(f"Error seeding data: {e}")
+        db.rollback()
+    finally:
+        db.close()
 
 if __name__ == "__main__":
-    run_seed()
-    print("Seed data inserted successfully.")
+    seed_data()
 
-if __name__ == "__main__":
-    run_seed()

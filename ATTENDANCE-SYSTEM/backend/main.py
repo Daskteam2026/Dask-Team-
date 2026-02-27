@@ -5,15 +5,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 
 from routes import employees, attendance, leaves, reports
+from auth import router as auth_router
 
 app = FastAPI(title="Attendance System API")
 
+# Include all routers
+app.include_router(auth_router)
 app.include_router(employees.router)
 app.include_router(attendance.router)
 app.include_router(leaves.router)
 app.include_router(reports.router)
 
-# add CORS middleware (useful during development and if external frontends access the API)
+# add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -29,11 +32,12 @@ app.mount("/static", StaticFiles(directory=frontend_dir), name="static")
 # root and html fallback
 @app.get("/")
 def root():
-    return FileResponse(frontend_dir / "index.html")
+    return FileResponse(frontend_dir / "home.html")
 
 @app.get("/{file_name}.html")
 def serve_html(file_name: str):
     path = frontend_dir / f"{file_name}.html"
     if path.exists():
         return FileResponse(path)
-    return FileResponse(frontend_dir / "index.html")
+    return FileResponse(frontend_dir / "home.html")
+

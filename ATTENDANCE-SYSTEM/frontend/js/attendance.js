@@ -1,109 +1,163 @@
-// Show today's date on top
-document.addEventListener("DOMContentLoaded", function () {
-  const today = new Date();
-  document.getElementById("todayDate").innerText =
-    today.toDateString();
+// Attendance functionality using Backend API
+
+// Get current user
+const user = getCurrentUser();
+
+// Initialize attendance page
+async function initAttendance() {
+    if (!user) {
+        window.location.href = "home.html";
+        return;
+    }
+
+    // Show appropriate view based on role
+    const employeeView = document.getElementById("employeeAttendance");
+    const adminView = document.getElementById("adminAttendance");
+
+    if (user.role === "admin") {
+        employeeView.style.display = "none";
+        adminView.style.display = "block";
+        await loadAdminAttendance();
+    } else {
+        employeeView.style.display = "block";
+        adminView.style.display = "none";
+        await loadEmployeeAttendance(user.id);
+    }
+}
+
+// Load admin attendance view
+async function loadAdminAttendance() {
+    try {
+        const records = await apiRequest("/attendance/today");
+        const tableBody = document.getElementById("attendanceTableBody");
+        tableBody.innerHTML = "";
+
+        records.forEach(record => {
+            const row = `
+                <tr>
+                    <td>${record.employee_name || "Unknown"}</td>
+                    <td>${record.date}</td>
+                    <td>${record.check_in || "-"}</td>
+                    <td>${record.check_out || "-"}</td>
+                    <td>${calculateHours(record.check_in, record.check_out)}</td>
+                    <td><span class="status-${record.status.toLowerCase()}">${record.status}</span></td>
+                </tr>
+            `;
+            tableBody.innerHTML += row;
+        });
+    } catch (error) {
+        console.error("Failed to load attendance:", error);
+    }
+}
+
+// Load employee attendance view
+async function loadEmployeeAttendance(employeeId) {
+    try {
+        const today = new Date().toISOString().split('T')[0];
+        const records = await apiRequest(`/attendance/employee/${employeeId}`);
+        
+        // Find today's record
+        const todayRecord = records.find(r => r.date === today);
+        
+        const checkInBtn = document.getElementById("checkInBtn");
+        const checkOutBtn = document.getElementById("checkOutBtn");
+        const todayStatus = document.getElementById("todayStatus");
+
+        if (todayRecord) {
+            if (todayRecord.check_in && !todayRecord.check_out) {
+                // Checked in, waiting for checkout
+                checkInBtn.disabled = true;
+                checkOutBtn.disabled = false;
+                todayStatus.innerText = `Checked in at ${todayRecord.check_in}`;
+                startTimer(todayRecord.check_in);
+            } else if (todayRecord.check_in && todayRecord.check_out) {
+                // Already completed for today
+                checkInBtn.disabled = true;
+                checkOutBtn.disabled = true;
+                todayStatus.innerText = `Completed - ${todayRecord.check_in} to ${todayRecord.check_out}`;
+            }
+        } else {
+            // Not checked in yet
+            checkInBtn.disabled = false;
+            checkOutBtn.disabled = true;
+            todayStatus.innerText = "Not Checked In";
+        }
+    } catch (error) {
+        console.error("Failed to load attendance:", error);
+    }
+}
+
+// Check in
+async function checkIn() {
+    try {
+        await apiRequest(`/attendance/check-in`, "POST", { employee_id: user.id });
+        alert("Checked in successfully!");
+         window.location.reload();
+    } catch (error) {
+        alert("Check-in failed: " + error.message);
+    }
+}
+
+// Check out
+async function checkOut() {
+    try {
+        await apiRequest(`/attendance/check-out`, "POST", { employee_id: user.id });
+        alert("Checked out successfully!");
+        window.location.reload();
+    } catch (error) {
+        alert("Check-out failed: " + error.message);
+    }
+}
+
+// Calculate hours worked
+function calculateHours(checkIn, checkOut) {
+    if (!checkIn || !checkOut) return "-";
+    
+    const [inHour, inMin] = checkIn.split(":").map(Number);
+    const [outHour, outMin] = checkOut.split(":").map(Number);
+    
+    const totalMinutes = (outHour * 60 + outMin) - (inHour * 60 + inMin);
+    const hours = Math.floor(totalMinutes / 60);
+    const mins = totalMinutes % 60;
+    
+    return `${hours}h ${mins}m`;
+}
+
+// Timer for work duration
+let timerInterval;
+function startTimer(checkInTime) {
+    const [inHour, inMin] = checkInTime.split(":").map(Number);
+    const workStart = new Date();
+    workStart.setHours(inHour, inMin, 0);
+    
+    timerInterval = setInterval(() => {
+        const now = new Date();
+        const diff = now - workStart;
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const secs = Math.floor((diff % (1000 * 60)) / 1000);
+        
+        const timerEl = document.getElementById("workTimer");
+        if (timerEl) {
+            timerEl.innerText = 
+                `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+    }, 1000);
+}
+
+// Initialize on page load
+window.onload = initAttendance;
+
+// Button event listeners
+document.addEventListener("DOMContentLoaded", function() {
+    const checkInBtn = document.getElementById("checkInBtn");
+    const checkOutBtn = document.getElementById("checkOutBtn");
+    
+    if (checkInBtn) {
+        checkInBtn.addEventListener("click", checkIn);
+    }
+    if (checkOutBtn) {
+        checkOutBtn.addEventListener("click", checkOut);
+    }
 });
 
-let checkInTime = "";
-let records = [];
-let alreadyCheckedInToday = false;
-
-// Office timing (change if you want)
-const officeStartHour = 9;   // 9 AM
-const officeStartMin = 30;   // 9:30 AM
-
-// Check In
-function checkIn() {
-
-  if (alreadyCheckedInToday) {
-    alert("You already checked in today!");
-    return;
-  }
-
-  const now = new Date();
-  checkInTime = now;
-
-  alreadyCheckedInToday = true;
-  document.querySelector(".checkin").disabled = true;
-
-  document.getElementById("statusMsg").innerText =
-    "Checked in at " + now.toLocaleTimeString();
-}
-
-// Check Out
-function checkOut() {
-
-  if (!checkInTime) {
-    alert("Please check in first!");
-    return;
-  }
-
-  const now = new Date();
-
-  // Calculate working hours
-  const diffMs = now - checkInTime;
-  const hours = Math.floor(diffMs / (1000 * 60 * 60));
-  const minutes = Math.floor((diffMs / (1000 * 60)) % 60);
-
-  // Late or On-time check
-  const lateTime = new Date();
-  lateTime.setHours(officeStartHour, officeStartMin, 0);
-
-  let status = "On Time";
-  if (checkInTime > lateTime) status = "Late";
-
-  const today = new Date().toLocaleDateString();
-
-  records.push({
-    date: today,
-    in: checkInTime.toLocaleTimeString(),
-    out: now.toLocaleTimeString(),
-    status: status + " (" + hours + "h " + minutes + "m)"
-  });
-
-  document.getElementById("statusMsg").innerText =
-    "Checked out at " + now.toLocaleTimeString();
-
-  renderTable();
-
-  // Reset for tomorrow demo
-  checkInTime = "";
-}
-
-// Render table
-function renderTable() {
-  const tbody = document.getElementById("attendanceBody");
-  tbody.innerHTML = "";
-
-  records.forEach(r => {
-    tbody.innerHTML += `
-      <tr>
-        <td>${r.date}</td>
-        <td>${r.in}</td>
-        <td>${r.out}</td>
-        <td>${r.status}</td>
-      </tr>`;
-  });
-}
-
-document.getElementById("attendanceForm").addEventListener("submit", async e => {
-  e.preventDefault();
-  const data = {
-    employee_id: parseInt(document.getElementById("employeeId").value),
-    date: document.getElementById("date").value,
-    status: document.getElementById("status").value
-  };
-
-  try {
-    const result = await apiRequest("/attendance/", "POST", data);
-    document.getElementById("output").textContent = JSON.stringify(result, null, 2);
-  } catch (err) {
-    alert("Error: " + err.message);
-  }
-});
-
-async function getAttendance(employeeId) {
-  const records = await apiRequest(`/attendance/employee/${employeeId}`);
-  document.getElementById("attendanceOutput").textContent = JSON.stringify(records, null, 2);
-}

@@ -1,94 +1,190 @@
-// Modal controls
+// Authentication using Backend API
 
 let selectedRole = "employee";
 
 function setRole(role) {
   selectedRole = role;
-
   document.getElementById("empBtn").classList.remove("active");
   document.getElementById("adminBtn").classList.remove("active");
 
   if (role === "employee") {
     document.getElementById("empBtn").classList.add("active");
-    document.getElementById("registerLink").style.display = "block";
   } else {
     document.getElementById("adminBtn").classList.add("active");
-    document.getElementById("registerLink").style.display = "none";
-    showLogin(); // always show login for admin
   }
 }
 
 function closeModal() {
-  document.getElementById("authModal").classList.remove("active");
+  const modal = document.getElementById("authModal");
+  if (modal) {
+    modal.classList.remove("active");
+  }
 }
 
-function openLogin(){
-  document.getElementById("authModal").classList.add("active");
+function openLogin() {
+  const modal = document.getElementById("authModal");
+  if (modal) {
+    modal.classList.add("active");
+  }
   showLogin();
 }
 
-function openRegister(){
-  document.getElementById("authModal").classList.add("active");
+function openRegister() {
+  const modal = document.getElementById("authModal");
+  if (modal) {
+    modal.classList.add("active");
+  }
   showRegister();
 }
 
-function showRegister(){
-  document.getElementById("loginForm").style.display = "none";
-  document.getElementById("registerForm").style.display = "block";
+function showRegister() {
+  const loginForm = document.getElementById("loginForm");
+  const registerForm = document.getElementById("registerForm");
+  if (loginForm) loginForm.style.display = "none";
+  if (registerForm) registerForm.style.display = "block";
 }
 
-function showLogin(){
-  document.getElementById("loginForm").style.display = "block";
-  document.getElementById("registerForm").style.display = "none";
+function showLogin() {
+  const loginForm = document.getElementById("loginForm");
+  const registerForm = document.getElementById("registerForm");
+  if (loginForm) loginForm.style.display = "block";
+  if (registerForm) registerForm.style.display = "none";
 }
 
 // Register user
-function register() {
+async function register() {
   const name = document.getElementById("regName").value;
   const email = document.getElementById("regEmail").value;
   const pass = document.getElementById("regPass").value;
-  const role = "employee";  // Admin cannot register
-  const department = document.getElementById("regDept").value;
+  const dept = document.getElementById("regDept") ? document.getElementById("regDept").value : "General";
 
-  // register user in backend as employee record
-  apiRequest("/employees/", "POST", { name, department })
-    .catch(e => console.warn("backend registration failed", e));
+  if (!name || !email || !pass) {
+    alert("Please fill all fields");
+    return;
+  }
 
-  const user = { name, email, pass, role };
-  localStorage.setItem(email, JSON.stringify(user));
+  try {
+    // Try to register via API
+    const response = await apiRequest("/auth/register", "POST", {
+      name: name,
+      email: email,
+      password: pass,
+      department: dept,
+      role: selectedRole
+    });
 
-  alert("Registered successfully!");
-  closeModal();
-  showLogin();
+    alert("Registered successfully! Please login.");
+    showLogin();
+  } catch (error) {
+    // Fallback: create local user for demo
+    const users = JSON.parse(localStorage.getItem("users")) || [];
+    
+    if (users.find(u => u.email === email)) {
+      alert("User already exists!");
+      return;
+    }
+
+    users.push({
+      id: users.length + 1,
+      name: name,
+      email: email,
+      password: pass,
+      department: dept,
+      role: selectedRole
+    });
+    
+    localStorage.setItem("users", JSON.stringify(users));
+    alert("Registered successfully! Please login.");
+    showLogin();
+  }
 }
 
 // Login user
-function login(){
-
+async function login() {
   const email = document.getElementById("loginEmail").value;
   const pass = document.getElementById("loginPass").value;
 
-  if(!email || !pass){
+  if (!email || !pass) {
     alert("Enter email and password");
     return;
   }
 
-  // get role from toggle (Employee/Admin)
-  const role = document.querySelector(".role-toggle .active").innerText;
+  try {
+    // Try to login via API
+    const response = await apiRequest("/auth/login", "POST", {
+      email: email,
+      password: pass
+    });
 
-  // create fake user session
-  const user = {
-    name: email.split("@")[0],
-    role: role
-  };
+    // Save user session
+    localStorage.setItem("currentUser", JSON.stringify(response.user));
+    localStorage.setItem("token", response.token || "");
+    
+    // Redirect to dashboard
+    window.location.href = "index.html";
+  } catch (error) {
+    // Fallback: check local users for demo
+    const users = JSON.parse(localStorage.getItem("users")) || [];
+    const user = users.find(u => u.email === email && u.password === pass);
 
-  // save user in browser
-  localStorage.setItem("currentUser", JSON.stringify(user));
+    if (!user) {
+      // Check for default admin
+      if (email === "admin@dask.com" && pass === "admin123") {
+        const adminUser = {
+          id: 0,
+          name: "Admin",
+          email: "admin@dask.com",
+          role: "admin"
+        };
+        localStorage.setItem("currentUser", JSON.stringify(adminUser));
+        window.location.href = "index.html";
+        return;
+      }
+      
+      alert("Invalid credentials!");
+      return;
+    }
 
-  // redirect to dashboard
-  window.location.href = "/index.html";
+    // Save user session
+    localStorage.setItem("currentUser", JSON.stringify(user));
+    window.location.href = "index.html";
+  }
 }
 
+// Logout
+function logout() {
+  localStorage.removeItem("currentUser");
+  localStorage.removeItem("token");
+  window.location.href = "home.html";
+}
+
+// Get current user
+function getCurrentUser() {
+  const userStr = localStorage.getItem("currentUser");
+  if (!userStr) return null;
+  return JSON.parse(userStr);
+}
+
+// Initialize user info on pages
+function initUserInfo() {
+  const user = getCurrentUser();
+  if (!user) return;
+
+  const navUser = document.getElementById("navUser");
+  const navAvatar = document.getElementById("navAvatar");
+  
+  if (navUser) {
+    navUser.innerText = user.name || user.email;
+  }
+  if (navAvatar) {
+    navAvatar.innerText = (user.name || user.email).charAt(0).toUpperCase();
+  }
+}
+
+// Initialize on page load
+document.addEventListener("DOMContentLoaded", function() {
+  initUserInfo();
+});
 
 // Close when clicking outside modal
 window.onclick = function(e) {
@@ -103,11 +199,3 @@ document.addEventListener("keydown", function(e){
   if (e.key === "Escape") closeModal();
 });
 
-
-async function login(username, password) {
-  return await apiRequest("/auth/login", "POST", { username, password });
-}
-
-async function logout() {
-  return await apiRequest("/auth/logout", "POST");
-}
