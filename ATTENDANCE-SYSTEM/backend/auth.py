@@ -1,11 +1,62 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from models import db_models
 from database import get_db
 import hashlib
+from datetime import timedelta, datetime
+from jose import JWTError, jwt
+from passlib.context import CryptContext
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+# JWT configuration
+SECRET_KEY = "your-secret-key-change-in-production"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password: str) -> str:
+    return pwd_context.hash(password)
+
+def create_access_token(data: dict, expires_delta: timedelta = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES) + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+# OAuth2 scheme
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    """Get current authenticated user from JWT token"""
+    credentials_exception = HTTPException(
+        status_code=401,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+    
+    user = db.query(db_models.Employee).filter(db_models.Employee.email == email).first()
+    if user is None:
+        raise credentials_exception
+    return user
 
 # Pydantic models for auth
 class RegisterRequest(BaseModel):
@@ -29,12 +80,6 @@ class UserOut(BaseModel):
     class Config:
         from_attributes = True
 
-def hash_password(password: str) -> str:
-    return hashlib.sha256(password.encode()).hexdigest()
-
-def verify_password(password: str, hashed: str) -> bool:
-    return hash_password(password) == hashed
-
 @router.post("/register")
 def register(request: RegisterRequest, db: Session = Depends(get_db)):
     # Check if user already exists
@@ -49,7 +94,7 @@ def register(request: RegisterRequest, db: Session = Depends(get_db)):
     new_user = db_models.Employee(
         name=request.name,
         email=request.email,
-        password_hash=hash_password(request.password),
+        password_hash=get_password_hash(request.password),
         department=request.department,
         role=request.role
     )
@@ -82,8 +127,14 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
     if not verify_password(request.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
+    # Create access token
+    access_token = create_access_token(
+        data={"sub": user.email}
+    )
+    
     return {
-        "token": f"token_{user.id}_{user.email}",
+        "access_token": access_token,
+        "token_type": "bearer",
         "user": {
             "id": user.id,
             "name": user.name,
@@ -94,13 +145,12 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
     }
 
 @router.get("/me")
-def get_current_user(db: Session = Depends(get_db)):
-    # This would be enhanced with actual JWT token validation
-    # For now, returns a demo user
+def get_current_user_info(current_user: db_models.Employee = Depends(get_current_user)):
     return {
-        "id": 0,
-        "name": "Admin",
-        "email": "admin@dask.com",
-        "role": "admin"
+        "id": current_user.id,
+        "name": current_user.name,
+        "email": current_user.email,
+        "role": current_user.role,
+        "department": current_user.department
     }
 

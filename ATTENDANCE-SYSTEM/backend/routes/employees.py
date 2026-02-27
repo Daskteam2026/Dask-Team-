@@ -3,13 +3,12 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from datetime import timedelta
 from models import db_models
-from models.schema import EmployeeCreate, EmployeeUpdate, EmployeeOut
+from models.schema import EmployeeCreate, EmployeeUpdate, EmployeeOut, Token
 from database import get_db
 from auth import verify_password, get_password_hash, create_access_token, get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES
 
 router = APIRouter(prefix="/employees", tags=["Employees"])
 
-# Login request/response models
 class LoginRequest(BaseModel):
     email: str
     password: str

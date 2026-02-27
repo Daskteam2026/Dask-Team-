@@ -116,9 +116,9 @@ async function login() {
       password: pass
     });
 
-    // Save user session
+    // Save user session - handle both response formats
     localStorage.setItem("currentUser", JSON.stringify(response.user));
-    localStorage.setItem("token", response.token || "");
+    localStorage.setItem("token", response.access_token || response.token || "");
     
     // Redirect to dashboard
     window.location.href = "index.html";

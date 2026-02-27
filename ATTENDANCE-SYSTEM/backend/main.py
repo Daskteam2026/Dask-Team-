@@ -29,6 +29,9 @@ app.add_middleware(
 frontend_dir = Path(__file__).parent.parent / "frontend"
 app.mount("/static", StaticFiles(directory=frontend_dir), name="static")
 
+# Also serve static files at root level for direct access
+app.mount("", StaticFiles(directory=frontend_dir), name="root_static")
+
 # root and html fallback
 @app.get("/")
 def root():
