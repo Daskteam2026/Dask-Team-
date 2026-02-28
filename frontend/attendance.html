@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Attendance</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- Top Navigation -->
+<nav class="navbar">
+  <div class="nav-left">
+    <h2 class="logo">DASK</h2>
+    <a href="index.html">Dashboard</a>
+    <a href="attendance.html" class="active">Attendance</a>
+    <a href="leaves.html">Leaves</a>
+    <a href="reports.html">Reports</a>
+  </div>
+
+  <div class="nav-right">
+    <div class="profile" id="profileMenu">
+      <span id="navUser"></span>
+      <div class="avatar" id="navAvatar">S</div>
+      <!-- Dropdown -->
+      <div class="profile-dropdown" id="profileDropdown">
+        <button onclick="logout()">Logout</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+  <h1>Attendance</h1>
+
+  <!-- EMPLOYEE VIEW -->
+  <div id="employeeAttendance">
+    <div class="attendance-card">
+      <h2>Today's Attendance</h2>
+      <div class="attendance-buttons">
+        <button id="checkInBtn" class="btn success">Check In</button>
+        <button id="checkOutBtn" class="btn danger" disabled>Check Out</button>
+      </div>
+      <div class="timer-box">
+        <h3>Working Time</h3>
+        <p id="workTimer">00:00:00</p>
+      </div>
+      <div class="status-box">
+        <p>Status: <span id="todayStatus">Not Checked In</span></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN VIEW -->
+  <div id="adminAttendance" style="display:none;">
+    <div class="leave-main-card">
+      <table class="leave-table">
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Date</th>
+            <th>Check In</th>
+            <th>Check Out</th>
+            <th>Total Hours</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="attendanceTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/user.js"></script>
+<script src="js/attendance.js"></script>
+</body>
+</html>
+

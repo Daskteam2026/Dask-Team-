@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Smart Attendance System</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- Top Navigation -->
+<nav class="navbar">
+  <div class="nav-left">
+    <h2 class="logo">DASK</h2>
+    <a href="index.html" class="active">Dashboard</a>
+    <a href="attendance.html">Attendance</a>
+    <a href="leaves.html">Leaves</a>
+    <a href="reports.html">Reports</a>
+  </div>
+
+  <div class="nav-right">
+    <div class="profile" id="profileMenu">
+      <span id="navUser"></span>
+      <div class="avatar" id="navAvatar">S</div>
+      <!-- Dropdown -->
+      <div class="profile-dropdown" id="profileDropdown">
+        <button onclick="logout()">Logout</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- Main Content -->
+<div class="container">
+  <h1>Dashboard</h1>
+
+  <div class="cards" id="adminCards">
+    <div class="card">
+      <h3>Total Employees</h3>
+      <p id="empCount">0</p>
+    </div>
+    <div class="card">
+      <h3>Present Today</h3>
+      <p id="presentCount">0</p>
+    </div>
+    <div class="card">
+      <h3>On Leave</h3>
+      <p id="leaveCount">0</p>
+    </div>
+    <div class="card">
+      <h3>Late Entries</h3>
+      <p id="lateCount">0</p>
+    </div>
+  </div>
+
+  <!-- EMPLOYEE CARDS -->
+  <div class="cards" id="employeeCards" style="display:none;">
+    <div class="card">
+      <h3>Total Leaves Applied</h3>
+      <p id="myTotalLeaves">0</p>
+    </div>
+    <div class="card">
+      <h3>Days Worked</h3>
+      <p id="daysWorked">0</p>
+    </div>
+    <div class="card">
+      <h3>Leaves Available</h3>
+      <p id="leavesAvailable">0</p>
+    </div>
+    <div class="card">
+      <h3>Pending Requests</h3>
+      <p id="myPendingLeaves">0</p>
+    </div>
+  </div>
+
+  <div class="charts-container">
+    <div class="chart-box">
+      <h3>Weekly Attendance</h3>
+      <canvas id="attendanceChart"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>Leave Distribution</h3>
+      <canvas id="leaveChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="js/api.js"></script>
+<script src="js/user.js"></script>
+<script src="js/dashboard.js"></script>
+</body>
+</html>
+
