@@ -103,9 +103,8 @@ Common issues are documented in `README.md` under the "Troubleshooting" section.
 
 1. ✓ Database configured (Neon)
 2. ✓ API endpoints ready
-3. ✓ Docker container ready
-4. → Push to GitHub and deploy via Neon
-5. → Add more features (notifications, reports, etc.)
+3. ✓ Frontend/backend deployment configurations added (Vercel/Netlify)
+4. → Add more features (notifications, reports, etc.)
 
 For detailed deployment info, see **NEON_DEPLOYMENT.md**
 
