@@ -45,6 +45,10 @@ app.mount("/css", StaticFiles(directory=frontend_dir / "css"), name="css")
 app.mount("/js", StaticFiles(directory=frontend_dir / "js"), name="js")
 app.mount("/images", StaticFiles(directory=frontend_dir / "images"), name="images")
 
+# provide a legacy `/static` path that mirrors the frontend directory
+# some tests and older code expect files at /static/...
+app.mount("/static", StaticFiles(directory=frontend_dir), name="static")
+
 # root and html fallback (these routes must come AFTER static mounts)
 @app.get("/")
 async def root():

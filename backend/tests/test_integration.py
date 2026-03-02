@@ -32,7 +32,7 @@ def test_root_serves_index():
 
 def test_static_asset():
     # check that a known static asset is served correctly
-    response = client.get("/static/css/style.css")
+    response = client.get("/css/style.css")
     assert response.status_code == 200
     assert "body" in response.text  # simple check that CSS returned
 
@@ -45,7 +45,7 @@ def test_api_employees_empty():
 
 def test_api_register_employee():
     # create a new employee via the API
-    payload = {"name": "Test User", "department": "Engineering"}
+    payload = {"name": "Test User", "department": "Engineering", "email": "test@example.com", "password": "secret"}
     response = client.post("/employees/", json=payload)
     assert response.status_code == 200
     data = response.json()

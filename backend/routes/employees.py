@@ -79,7 +79,15 @@ def get_current_employee(current_user: db_models.Employee = Depends(get_current_
 
 @router.post("/", response_model=EmployeeOut)
 def create_employee(employee: EmployeeCreate, db: Session = Depends(get_db)):
-    db_employee = db_models.Employee(**employee.model_dump())
+    # similar to register but allows direct creation via admin
+    hashed_password = get_password_hash(employee.password)
+    db_employee = db_models.Employee(
+        name=employee.name,
+        email=employee.email,
+        password_hash=hashed_password,
+        department=employee.department,
+        role=employee.role if hasattr(employee, "role") else "employee"
+    )
     db.add(db_employee)
     db.commit()
     db.refresh(db_employee)
