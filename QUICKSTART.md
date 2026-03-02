@@ -1,203 +1,93 @@
 # Attendance System - Quick Start Guide
 
-## Current Status
-✓ **Frontend & Backend Integrated** - Single `main.py` server  
-✓ **Neon PostgreSQL Configured** - Connection string set up  
-✓ **Docker Ready** - `Dockerfile` included for containerization  
-✓ **Swagger API Docs** - Auto-generated at `/docs`  
-✓ **GitHub Actions** - CI/CD workflow for Docker builds  
-
----
-
-## Project Details
-
-**Neon Organization**: org-twilight-scene-43357167  
-**Neon Project**: autumn-river-75249190 (ATTENDANCE-SYSTEM)  
-**Database**: PostgreSQL (neondb)  
-**Region**: eu-west-2 (AWS Ireland)  
+This quick guide covers the essential commands needed to run the project
+locally, test the API, and deploy the frontend and backend using Vercel and
+Netlify. For a more detailed explanation refer to `README.md`.
 
 ---
 
 ## 1. Local Development
 
-### Option A: Using SQLite (Fastest, No Setup)
 ```bash
 cd ATTENDANCE-SYSTEM
-python -m uvicorn main:app --reload
-```
-Visit: http://127.0.0.1:8000/docs
-
-### Option B: Using Neon Database
-
-1. **Set environment variable** (Windows PowerShell):
-```powershell
-$env:DATABASE_URL = "postgresql://neondb_owner:npg_a5oTXW9EcGHd@ep-cold-art-ab08qs0j-pooler.eu-west-2.aws.neon.tech/neondb?channel_binding=require&sslmode=require"
+python -m venv .venv
+. \.venv\Scripts\Activate.ps1    # PowerShell (Windows)
+# or: source .venv/bin/activate    # macOS/Linux
+pip install -r backend/requirements.txt
 ```
 
-Or **Linux/Mac**:
+Set up the database URL (optional, for Neon Postgres):
+
 ```bash
-export DATABASE_URL="postgresql://neondb_owner:npg_a5oTXW9EcGHd@ep-cold-art-ab08qs0j-pooler.eu-west-2.aws.neon.tech/neondb?channel_binding=require&sslmode=require"
+# Windows PowerShell
+$env:DATABASE_URL = "postgresql://<user>:<pass>@<host>/neondb?sslmode=require"
 ```
 
-Or **Create `.env` file** (copy from `.env.example`):
-```bash
-cp .env.example .env
-# Edit .env with your DATABASE_URL
-```
+Initialize and seed the database:
 
-2. **Initialize database** (run once):
 ```bash
 python init_neon_db.py
+python seed_database.py
 ```
 
-3. **Start server**:
+Run the server:
+
 ```bash
-python -m uvicorn main:app --reload
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
+
+Open the browser at http://localhost:8000/ to view the frontend, and
+http://localhost:8000/docs for Swagger API docs.
 
 ---
 
-## 2. API Testing with Swagger UI
+## 2. API Testing (Swagger UI)
 
-Once the server is running, visit:
-- **Interactive Docs**: http://127.0.0.1:8000/docs
-- **Alternative Docs**: http://127.0.0.1:8000/redoc
-
-### Example Requests (in Swagger):
-
-**Register a new employee**:
-```bash
-POST /employees/register
-Content-Type: application/json
-
-{
-  "name": "John Doe",
-  "email": "john@example.com",
-  "password": "secure_password",
-  "department": "Engineering",
-  "role": "employee"
-}
-```
-
-**Login**:
-```bash
-POST /employees/login
-Content-Type: application/json
-
-{
-  "email": "john@example.com",
-  "password": "secure_password"
-}
-```
-
-**Mark Attendance**:
-```bash
-POST /attendance/check-in
-Content-Type: application/json
-
-{
-  "employee_id": 1
-}
-```
-
-**Get Employee Info**:
-```bash
-GET /employees/1
-```
+Use the interactive documentation at `/docs` to exercise the endpoints.
+Example JSON payloads are pre-populated in the Swagger interface.
 
 ---
 
-## 3. Docker Deployment
+## 3. Deploying
 
-### Build locally:
-```bash
-docker build -t attendance-app:latest -f Dockerfile .
-```
-
-### Run with SQLite:
-```bash
-docker run -p 8000:8000 attendance-app:latest
-```
-
-### Run with Neon:
-```bash
-docker run \
-  -e DATABASE_URL="postgresql://neondb_owner:npg_a5oTXW9EcGHd@ep-cold-art-ab08qs0j-pooler.eu-west-2.aws.neon.tech/neondb?channel_binding=require&sslmode=require" \
-  -e SECRET_KEY="your-secure-secret-key" \
-  -p 8000:8000 \
-  attendance-app:latest
-```
+* **Frontend (Vercel)**: Simply point Vercel to this repository and it will serve
+the `frontend/` directory as a static site. The `vercel.json` file already
+contains the necessary configuration.
+* **Backend (Netlify)**: Point Netlify at this repository, and it will build the
+Python dependencies and publish a serverless function from `functions/app.py`.
+  Ensure the `DATABASE_URL` environment variable is set in Netlify's settings.
 
 ---
 
-## 4. Deploy to Production (Neon App Platform)
+## 4. Useful Commands
 
-### Step 1: Push to GitHub
 ```bash
+# git operations
 git add .
-git commit -m "Neon integration and Docker setup"
-git push origin main
+git commit -m "<message>"
+git push origin master
+
+# run tests
+pytest backend/tests
 ```
 
-### Step 2: Enable GitHub Actions
-- Go to your GitHub repo → Actions → enable workflows
+## 5. Environment Variables
 
-### Step 3: Deploy via Neon
-1. Go to [Neon Console](https://console.neon.tech)
-2. Select project **autumn-river-75249190**
-3. Navigate to **Apps** section
-4. Create new app:
-   - **Container Image**: `ghcr.io/YOUR_USERNAME/YOUR_REPO:latest`
-   - **Environment Variables**:
-     - `DATABASE_URL`: (your Neon connection string)
-     - `SECRET_KEY`: (generate secure random string)
-   - **Port**: 8000
+See `.env.example` for details. Typical variables:
 
-5. Deploy and monitor
-
----
-
-## 5. Key Files
-
-| File | Purpose |
-|------|---------|
-| `main.py` | FastAPI entry point (serves frontend + API) |
-| `backend/database.py` | SQLAlchemy models & DB connection |
-| `backend/routes/` | API route handlers |
-| `backend/auth.py` | JWT authentication |
-| `frontend/` | HTML/CSS/JS (served as static files) |
-| `Dockerfile` | Container image definition |
-| `.github/workflows/build-and-push.yml` | CI/CD pipeline |
-| `init_neon_db.py` | Database schema initialization |
-| `.env` | Environment variables (Neon credentials) |
+```
+DATABASE_URL=postgresql://...
+SECRET_KEY=...
+HOST=0.0.0.0
+PORT=8000
+```
 
 ---
 
 ## 6. Troubleshooting
 
-### "Cannot connect to database"
-- **Check**: `echo $env:DATABASE_URL` (Windows) or `echo $DATABASE_URL` (Linux)
-- **Solution**: Ensure `DATABASE_URL` is set before running the app
+Common issues are documented in `README.md` under the "Troubleshooting" section.
 
-### "ModuleNotFoundError: psycopg"
-- **Solution**: Run `pip install psycopg[binary]`
-
-### "Tables not created"
-- **Solution**: Run `python init_neon_db.py` to initialize schema
-
-### "API returns 401 Unauthorized"
-- **Cause**: Missing JWT token
-- **Solution**: Login first via `/employees/login` and use token in Authorization header
-
----
-
-## 7. API Endpoints Summary
-
-| Endpoint | Method | Auth | Description |
-|----------|--------|------|-------------|
-| `/` | GET | No | Home page |
-| `/docs` | GET | No | Swagger UI |
-| `/employees/` | GET | No | List employees |
 | `/employees/register` | POST | No | Register employee |
 | `/employees/login` | POST | No | Login employee |
 | `/employees/{id}` | GET | Yes | Get employee |
