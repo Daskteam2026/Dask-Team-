@@ -1,190 +1,122 @@
-// Authentication using Backend API
+// Create default admin if not exists
+let users = JSON.parse(localStorage.getItem("users")) || [];
+
+if(!users.find(u => u.role === "Admin")){
+  users.push({
+    name: "Suraj",
+    email: "admin@dask.com",
+    pass: "admin123",
+    role: "Admin"
+  });
+  localStorage.setItem("users", JSON.stringify(users));
+}
+
+// Modal controls
 
 let selectedRole = "employee";
 
 function setRole(role) {
   selectedRole = role;
+
   document.getElementById("empBtn").classList.remove("active");
   document.getElementById("adminBtn").classList.remove("active");
 
   if (role === "employee") {
     document.getElementById("empBtn").classList.add("active");
+    document.getElementById("registerLink").style.display = "block";
   } else {
     document.getElementById("adminBtn").classList.add("active");
+    document.getElementById("registerLink").style.display = "none";
+    showLogin(); // always show login for admin
   }
 }
 
 function closeModal() {
-  const modal = document.getElementById("authModal");
-  if (modal) {
-    modal.classList.remove("active");
-  }
+  document.getElementById("authModal").classList.remove("active");
 }
 
-function openLogin() {
-  const modal = document.getElementById("authModal");
-  if (modal) {
-    modal.classList.add("active");
-  }
+function openLogin(){
+  document.getElementById("authModal").classList.add("active");
   showLogin();
 }
 
-function openRegister() {
-  const modal = document.getElementById("authModal");
-  if (modal) {
-    modal.classList.add("active");
-  }
+function openRegister(){
+  document.getElementById("authModal").classList.add("active");
   showRegister();
 }
 
-function showRegister() {
-  const loginForm = document.getElementById("loginForm");
-  const registerForm = document.getElementById("registerForm");
-  if (loginForm) loginForm.style.display = "none";
-  if (registerForm) registerForm.style.display = "block";
+function showRegister(){
+  document.getElementById("loginForm").style.display = "none";
+  document.getElementById("registerForm").style.display = "block";
 }
 
-function showLogin() {
-  const loginForm = document.getElementById("loginForm");
-  const registerForm = document.getElementById("registerForm");
-  if (loginForm) loginForm.style.display = "block";
-  if (registerForm) registerForm.style.display = "none";
+function showLogin(){
+  document.getElementById("loginForm").style.display = "block";
+  document.getElementById("registerForm").style.display = "none";
 }
 
 // Register user
-async function register() {
+function register() {
+
   const name = document.getElementById("regName").value;
   const email = document.getElementById("regEmail").value;
   const pass = document.getElementById("regPass").value;
-  const dept = document.getElementById("regDept") ? document.getElementById("regDept").value : "General";
+  const salary = Number(document.getElementById("salary").value);
+  const department = document.getElementById("department").value;
 
-  if (!name || !email || !pass) {
-    alert("Please fill all fields");
+  const role = "Employee";
+
+  let users = JSON.parse(localStorage.getItem("users")) || [];
+
+  const exists = users.find(u => u.email === email);
+  if(exists){
+    alert("User already exists!");
     return;
   }
 
-  try {
-    // Try to register via API
-    const response = await apiRequest("/auth/register", "POST", {
-      name: name,
-      email: email,
-      password: pass,
-      department: dept,
-      role: selectedRole
-    });
+  const newUser = {
+    name,
+    email,
+    pass,
+    role,
+    salary,
+    department
+  };
 
-    alert("Registered successfully! Please login.");
-    showLogin();
-  } catch (error) {
-    // Fallback: create local user for demo
-    const users = JSON.parse(localStorage.getItem("users")) || [];
-    
-    if (users.find(u => u.email === email)) {
-      alert("User already exists!");
-      return;
-    }
+  users.push(newUser);
+  localStorage.setItem("users", JSON.stringify(users));
 
-    users.push({
-      id: users.length + 1,
-      name: name,
-      email: email,
-      password: pass,
-      department: dept,
-      role: selectedRole
-    });
-    
-    localStorage.setItem("users", JSON.stringify(users));
-    alert("Registered successfully! Please login.");
-    showLogin();
-  }
+  alert("Registered successfully!");
+  closeModal();
+  showLogin();
 }
 
 // Login user
-async function login() {
+function login(){
+
   const email = document.getElementById("loginEmail").value;
   const pass = document.getElementById("loginPass").value;
 
-  if (!email || !pass) {
+  if(!email || !pass){
     alert("Enter email and password");
     return;
   }
 
-  try {
-    // Try to login via API
-    const response = await apiRequest("/auth/login", "POST", {
-      email: email,
-      password: pass
-    });
+  let users = JSON.parse(localStorage.getItem("users")) || [];
 
-    // Save user session - handle both response formats
-    localStorage.setItem("currentUser", JSON.stringify(response.user));
-    localStorage.setItem("token", response.access_token || response.token || "");
-    
-    // Redirect to dashboard
-    window.location.href = "index.html";
-  } catch (error) {
-    // Fallback: check local users for demo
-    const users = JSON.parse(localStorage.getItem("users")) || [];
-    const user = users.find(u => u.email === email && u.password === pass);
+  const foundUser = users.find(u => u.email === email && u.pass === pass);
 
-    if (!user) {
-      // Check for default admin
-      if (email === "admin@dask.com" && pass === "admin123") {
-        const adminUser = {
-          id: 0,
-          name: "Admin",
-          email: "admin@dask.com",
-          role: "admin"
-        };
-        localStorage.setItem("currentUser", JSON.stringify(adminUser));
-        window.location.href = "index.html";
-        return;
-      }
-      
-      alert("Invalid credentials!");
-      return;
-    }
-
-    // Save user session
-    localStorage.setItem("currentUser", JSON.stringify(user));
-    window.location.href = "index.html";
+  if(!foundUser){
+    alert("Invalid credentials");
+    return;
   }
+
+  // ⭐ SAVE REAL USER (VERY IMPORTANT)
+  localStorage.setItem("currentUser", JSON.stringify(foundUser));
+
+  window.location.href = "index.html";
 }
 
-// Logout
-function logout() {
-  localStorage.removeItem("currentUser");
-  localStorage.removeItem("token");
-  window.location.href = "home.html";
-}
-
-// Get current user
-function getCurrentUser() {
-  const userStr = localStorage.getItem("currentUser");
-  if (!userStr) return null;
-  return JSON.parse(userStr);
-}
-
-// Initialize user info on pages
-function initUserInfo() {
-  const user = getCurrentUser();
-  if (!user) return;
-
-  const navUser = document.getElementById("navUser");
-  const navAvatar = document.getElementById("navAvatar");
-  
-  if (navUser) {
-    navUser.innerText = user.name || user.email;
-  }
-  if (navAvatar) {
-    navAvatar.innerText = (user.name || user.email).charAt(0).toUpperCase();
-  }
-}
-
-// Initialize on page load
-document.addEventListener("DOMContentLoaded", function() {
-  initUserInfo();
-});
 
 // Close when clicking outside modal
 window.onclick = function(e) {
@@ -198,4 +130,3 @@ window.onclick = function(e) {
 document.addEventListener("keydown", function(e){
   if (e.key === "Escape") closeModal();
 });
-

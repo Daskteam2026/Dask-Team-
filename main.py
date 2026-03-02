@@ -9,6 +9,14 @@ from backend.auth import router as auth_router
 
 app = FastAPI(title="Attendance System API")
 
+# If deployed on Netlify, wrap with Mangum (serverless adapter)
+try:
+    from mangum import Mangum
+    handler = Mangum(app)  # exported function for Netlify
+except ImportError:
+    handler = None
+
+
 # Include all routers
 app.include_router(auth_router)
 app.include_router(employees.router)
@@ -25,8 +33,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# serve frontend static files
+# serve frontend static files (used during local development)
 frontend_dir = Path(__file__).parent / "frontend"
+
+# NOTE: In production front/backend will be separated (frontend on Vercel,
+# backend on Netlify). The static routes below are harmless but not used by
+# the deployed backend.
 
 # Mount static file directories (css, js, images)
 app.mount("/css", StaticFiles(directory=frontend_dir / "css"), name="css")
