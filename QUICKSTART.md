@@ -106,7 +106,7 @@ Common issues are documented in `README.md` under the "Troubleshooting" section.
 3. ✓ Frontend/backend deployment configurations added (Vercel/Netlify)
 4. → Add more features (notifications, reports, etc.)
 
-For detailed deployment info, see **NEON_DEPLOYMENT.md**
+For detailed deployment info, see **NEON_DB.md**
 
 ---
 
