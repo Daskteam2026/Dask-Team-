@@ -2,12 +2,18 @@
 <html>
 <head>
   <title>Smart Attendance System</title>
-  <link rel="stylesheet" href="css/style.css">
-  <script src="js/api.js"></script>
-  <script src="js/auth.js"></script>
-  <img src="images/vlg.jpeg" alt="Logo">
+  <link rel="stylesheet" href="style.css">
+  <style>
+@keyframes colorBlink {
+  0%   { background-color: #ffff14; } /* Light Yellow */
+  50%  { background-color: #ffffff; } /* Bright Yellow */
+  100% { background-color: #ffff14; } /* Light Yellow */
+}
 
-
+.blink-button {
+  animation: colorBlink 1s infinite;
+}
+</style>
 </head>
 <body class="landing-body">
 
@@ -36,7 +42,7 @@
       all in one powerful platform.
     </p>
 
-    <a onclick="openRegister()" class="hero-btn">Try For Free →</a>
+    <a onclick="openRegister()" class="hero-btn blink-button">Sign Up →</a>
   </div>
 
   <!-- Image will go here -->
@@ -59,7 +65,7 @@
 </div>
 
     <!-- Login Form -->
-    <form id="loginForm">
+    <form id="loginForm" onsubmit="event.preventDefault(); login();">
       <h2>Login</h2>
       <input type="email" id="loginEmail" placeholder="Email" required>
       <input type="password" id="loginPass" placeholder="Password" required>
@@ -68,20 +74,19 @@
     </form>
 
     <!-- Register Form -->
-    <form id="registerForm" style="display:none;">
+    <form id="registerForm" style="display:none;" onsubmit="event.preventDefault(); register();">
       <h2>Register</h2>
       <input type="text" id="regName" placeholder="Full Name" required>
       <input type="email" id="regEmail" placeholder="Email" required>
       <input type="password" id="regPass" placeholder="Password" required>
+      <input type="number" id="salary" placeholder="Monthly Salary" required>
+      <input type="text" id="department" placeholder="Department (HR / IT / Sales)" required>
 
-      <select id="regDept">
-        <option value="General">General</option>
-        <option value="Engineering">Engineering</option>
-        <option value="Design">Design</option>
-        <option value="Marketing">Marketing</option>
-        <option value="HR">HR</option>
-        <option value="Finance">Finance</option>
-      </select>
+
+      <!-- <select id="regRole">
+        <option value="employee">Employee</option>
+        <option value="admin">Admin</option>
+      </select> -->
 
       <button type="submit">Register</button>
       <p>Already have account? <a onclick="showLogin()">Login</a></p>
@@ -90,9 +95,7 @@
   </div>
 </div>
 
-<script src="js/api.js"></script>
-<script src="js/auth.js"></script>
+<script src="auth.js"></script>
 
 </body>
 </html>
-

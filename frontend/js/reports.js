@@ -1,124 +1,249 @@
-// Reports functionality using Backend API
-
-// Get current user
-const user = getCurrentUser();
-
-// Initialize reports page
-async function initReports() {
-    if (!user) {
-        window.location.href = "home.html";
-        return;
-    }
-
-    // If admin, load employee list
-    if (user.role === "admin") {
-        await loadEmployeeList();
-    } else {
-        // Employee sees their own reports
-        await loadEmployeeReports(user.id);
-    }
+function showLoading(){
+  document.getElementById("loadingSpinner").classList.remove("hidden");
 }
 
-// Load employee list for admin
-async function loadEmployeeList() {
-    try {
-        const employees = await apiRequest("/employees");
-        const select = document.getElementById("employeeSelect");
-        
-        // Add current user as first option
-        const currentOption = document.createElement("option");
-        currentOption.value = user.id;
-        currentOption.textContent = user.name + " (You)";
-        select.appendChild(currentOption);
-        
-        // Add other employees
-        employees.forEach(emp => {
-            if (emp.id !== user.id) {
-                const option = document.createElement("option");
-                option.value = emp.id;
-                option.textContent = emp.name;
-                select.appendChild(option);
-            }
-        });
-        
-        // If employee, auto-load their reports
-        if (user.role !== "admin") {
-            await loadEmployeeReports(user.id);
-        }
-    } catch (error) {
-        console.error("Failed to load employees:", error);
-    }
+function hideLoading(){
+  document.getElementById("loadingSpinner").classList.add("hidden");
 }
 
-// Load employee reports
-async function loadEmployeeReports(employeeId) {
-    if (!employeeId) return;
-    
-    try {
-        // Get attendance summary
-        const attendanceData = await apiRequest(`/reports/attendance-summary/${employeeId}`);
-        displayAttendanceSummary(attendanceData);
-        
-        // Get leave summary
-        const leaveData = await apiRequest(`/reports/leave-summary/${employeeId}`);
-        displayLeaveSummary(leaveData);
-    } catch (error) {
-        console.error("Failed to load reports:", error);
-    }
+function showError(msg){
+  const box = document.getElementById("errorBox");
+  box.innerText = msg;
+  box.classList.remove("hidden");
 }
 
-// Display attendance summary
-function displayAttendanceSummary(data) {
-    const container = document.getElementById("attendanceSummary");
-    if (!container) return;
-    
-    container.innerHTML = `
-        <div class="summary-cards">
-            <div class="summary-card">
-                <h4>Present</h4>
-                <p class="present-count">${data.Present || 0}</p>
-            </div>
-            <div class="summary-card">
-                <h4>Absent</h4>
-                <p class="absent-count">${data.Absent || 0}</p>
-            </div>
-            <div class="summary-card">
-                <h4>Late</h4>
-                <p class="late-count">${data.Late || 0}</p>
-            </div>
-            <div class="summary-card">
-                <h4>On Leave</h4>
-                <p class="leave-count">${data.Leave || 0}</p>
-            </div>
-        </div>
-        <p class="total">Total Records: ${data.Total || 0}</p>
+function hideError(){
+  document.getElementById("errorBox").classList.add("hidden");
+}
+
+function showEmpty(){
+  document.getElementById("emptyState").classList.remove("hidden");
+}
+
+function hideEmpty(){
+  document.getElementById("emptyState").classList.add("hidden");
+}
+
+// Load stored data
+const users = JSON.parse(localStorage.getItem("users")) || [];
+const attendance = JSON.parse(localStorage.getItem("attendanceRecords")) || [];
+const leaves = JSON.parse(localStorage.getItem("leaveRequests")) || [];
+
+const TOTAL_LEAVE_QUOTA = 37;
+
+
+function generateSalaryReport(){
+    showLoading();
+hideError();
+hideEmpty();
+
+  const tbody = document.getElementById("salaryTableBody");
+  tbody.innerHTML = "";
+
+  const month = parseInt(document.getElementById("salaryMonth").value);
+  const year = parseInt(document.getElementById("salaryYear").value);
+
+  const employees = users.filter(u => u.role.toLowerCase() === "employee");
+
+  employees.forEach(emp => {
+
+    const BASE_SALARY = emp.salary;
+    const WORKING_DAYS = 22;
+    const PER_DAY = BASE_SALARY / WORKING_DAYS;
+
+    let deductions = 0;
+
+    const empAttendance = attendance.filter(a=>{
+      const d = new Date(a.date);
+      return a.employee === emp.name &&
+             d.getMonth() === month &&
+             d.getFullYear() === year;
+    });
+
+    const daysPresent = empAttendance.length;
+    const absentDays = WORKING_DAYS - daysPresent;
+    deductions += absentDays * PER_DAY;
+
+    const netSalary = BASE_SALARY - deductions;
+
+    tbody.innerHTML += `
+      <tr>
+        <td>${emp.name}</td>
+        <td>${emp.department}</td>
+        <td>₹${BASE_SALARY}</td>
+        <td>₹${Math.round(deductions)}</td>
+        <td>₹${Math.round(netSalary)}</td>
+      </tr>
     `;
+    if(users.length === 0){
+  hideLoading();
+  showEmpty();
+  return;
+}
+  });
+
+  setTimeout(()=>{
+  hideLoading();
+},700);
+
 }
 
-// Display leave summary
-function displayLeaveSummary(data) {
-    const container = document.getElementById("leaveSummary");
-    if (!container) return;
-    
-    container.innerHTML = `
-        <div class="summary-cards">
-            <div class="summary-card">
-                <h4>Approved</h4>
-                <p class="approved-count">${data.Approved || 0}</p>
-            </div>
-            <div class="summary-card">
-                <h4>Pending</h4>
-                <p class="pending-count">${data.Pending || 0}</p>
-            </div>
-            <div class="summary-card">
-                <h4>Rejected</h4>
-                <p class="rejected-count">${data.Rejected || 0}</p>
-            </div>
-        </div>
-        <p class="total">Total Requests: ${data.Total || 0}</p>
+function downloadCSV(){
+
+  let csv = "Name,Base Salary,Deductions,Net Salary\n";
+
+  document.querySelectorAll("#salaryTableBody tr").forEach(row=>{
+    const cols = row.querySelectorAll("td");
+    csv += `${cols[0].innerText},${cols[1].innerText},${cols[2].innerText},${cols[3].innerText}\n`;
+  });
+
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "salary_report.csv";
+  a.click();
+}
+
+function loadLeaveReport(){
+
+  const tbody = document.getElementById("leaveUtilBody");
+  tbody.innerHTML = "";
+
+  const employees = users.filter(u => u.role.toLowerCase() === "employee");
+
+  employees.forEach(emp => {
+
+    const myLeaves = leaves.filter(l =>
+      l.employee === emp.name && l.status === "Approved"
+    );
+
+    let usedDays = 0;
+
+    myLeaves.forEach(l=>{
+      const from = new Date(l.from);
+      const to = new Date(l.to);
+      usedDays += (to - from)/(1000*60*60*24) + 1;
+    });
+
+    const remaining = TOTAL_LEAVE_QUOTA - usedDays;
+
+    tbody.innerHTML += `
+      <tr>
+        <td>${emp.name}</td>
+        <td>${TOTAL_LEAVE_QUOTA}</td>
+        <td>${usedDays}</td>
+        <td>${remaining}</td>
+      </tr>
     `;
+  });
+}
+function loadAttendanceReport(){
+
+  const tbody = document.getElementById("attendanceSummaryBody");
+  tbody.innerHTML = "";
+
+  const employees = users.filter(u => u.role.toLowerCase() === "employee");
+
+  const WORKING_DAYS = 22;
+
+  employees.forEach(emp => {
+
+    const empAttendance = attendance.filter(a => a.employee === emp.name);
+
+    const daysPresent = empAttendance.length;
+    const lateEntries = empAttendance.filter(a => a.status === "Late").length;
+
+    // ✅ Attendance Percentage
+    const attendancePercent = Math.round((daysPresent / WORKING_DAYS) * 100);
+
+    let performance;
+
+    if(attendancePercent >= 90) performance = "Excellent";
+    else if(attendancePercent >= 75) performance = "Good";
+    else if(attendancePercent >= 60) performance = "Average";
+    else performance = "Poor";
+
+    // ✅ Badge color
+    let badgeClass =
+      performance === "Excellent" ? "badge-green" :
+      performance === "Good" ? "badge-blue" :
+      performance === "Average" ? "badge-yellow" :
+      "badge-red";
+
+    tbody.innerHTML += `
+      <tr>
+        <td>${emp.name}</td>
+        <td>${daysPresent}</td>
+        <td>${lateEntries}</td>
+        <td><span class="${badgeClass}">${performance}</span></td>
+      </tr>
+    `;
+  });
+
+  // =============================
+  // Department-wise Attendance
+  // =============================
+
+  const departmentMap = {};
+
+  attendance.forEach(a => {
+    const emp = users.find(u => u.name === a.employee);
+    if(!emp) return;
+
+    if(!departmentMap[emp.department]){
+      departmentMap[emp.department] = 0;
+    }
+
+    departmentMap[emp.department]++;
+  });
+
+  console.log("Department Attendance:", departmentMap);
+// ⭐ Show Top Department
+const topDepartment = Object.entries(departmentMap)
+  .sort((a,b)=> b[1]-a[1])[0];
+
+if(topDepartment){
+  document.getElementById("topDept").innerText =
+    topDepartment[0] + " (" + topDepartment[1] + ")";
 }
 
-// Initialize on page load
-window.onload = initReports;
 
+
+  // =============================
+  // Top 3 Absentees
+  // =============================
+
+  const absenteeList = employees.map(emp => {
+
+    const empAttendance = attendance.filter(a => a.employee === emp.name);
+    const absentDays = WORKING_DAYS - empAttendance.length;
+
+    return {
+      name: emp.name,
+      absentDays
+    };
+  });
+
+  // ⭐ Show Top 3 Absentees
+document.getElementById("abs1").innerText =
+  absenteeList[0]?.name + " (" + absenteeList[0]?.absentDays + " days)";
+
+document.getElementById("abs2").innerText =
+  absenteeList[1]?.name + " (" + absenteeList[1]?.absentDays + " days)";
+
+document.getElementById("abs3").innerText =
+  absenteeList[2]?.name + " (" + absenteeList[2]?.absentDays + " days)";
+
+  absenteeList.sort((a,b)=> b.absentDays - a.absentDays);
+
+  console.log("Top Absentees:", absenteeList.slice(0,3));
+}
+
+
+
+document.addEventListener("DOMContentLoaded", ()=>{
+  loadLeaveReport();
+  loadAttendanceReport();
+});

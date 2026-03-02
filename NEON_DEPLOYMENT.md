@@ -42,19 +42,9 @@ python -m uvicorn main:app --reload --host 127.0.0.1 --port 8000
 
 ### 2. Docker Container Deployment
 
-Build the Docker image:
-```bash
-docker build -t attendance-app:latest -f ATTENDANCE-SYSTEM/Dockerfile .
-```
-
-Run the container with Neon database:
-```bash
-docker run \
-  -e DATABASE_URL="postgresql://neondb_owner:npg_a5oTXW9EcGHd@ep-cold-art-ab08qs0j-pooler.eu-west-2.aws.neon.tech/neondb?channel_binding=require&sslmode=require" \
-  -e SECRET_KEY="your-secure-secret-key" \
-  -p 8000:8000 \
-  attendance-app:latest
-```
+*This project no longer includes an official Docker image; the backend is
+expected to run as a Netlify serverless function and the frontend hosted on
+Vercel. Remove this section if you are not using Docker.*
 
 ### 3. Deploy to Neon App Platform (Recommend for Production)
 
