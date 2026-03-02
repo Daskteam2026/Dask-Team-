@@ -1,6 +1,6 @@
 // API helper functions with JWT token support
 
-const BASE_URL = "";
+const BASE_URL = "https://your-netlify-backend.netlify.app";
 
 // Get stored token
 function getToken() {
