@@ -24,6 +24,41 @@ let secondsWorked = 0;
 const officeStartHour = 9;
 const officeStartMin = 30;
 
+function formatDisplayDate(date) {
+  return new Date(date).toLocaleDateString();
+}
+
+function formatInputDateToDisplay(dateValue) {
+  const [year, month, day] = dateValue.split("-").map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString();
+}
+
+async function fetchAttendanceRecords() {
+  const response = await fetch("/api/attendance");
+  return await response.json();
+}
+
+async function fetchEmployees() {
+  const response = await fetch("/api/employees");
+  return await response.json();
+}
+
+async function saveAttendanceRecord(record) {
+  const response = await fetch("/api/attendance", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(record)
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to save attendance");
+  }
+
+  return await response.json();
+}
+
 
 // 🚀 PAGE LOAD
 document.addEventListener("DOMContentLoaded", function () {
@@ -174,21 +209,15 @@ document.getElementById("endTimeText").innerText =
   let status = "On Time";
   if (checkInTime > lateTime) status = "Late";
 
-  const today = new Date().toLocaleDateString();
+  const today = formatDisplayDate(new Date());
 
-  await fetch("/api/attendance",{
-  method:"POST",
-  headers:{
-    "Content-Type":"application/json"
-  },
-  body:JSON.stringify({
+  await saveAttendanceRecord({
     employee: currentUser.name,
     date: today,
     check_in: checkInTime.toLocaleTimeString(),
     check_out: now.toLocaleTimeString(),
     status: "Present"
-  })
-});
+  });
   localStorage.removeItem("activeCheckIn");
   statusText.innerText = "Checked out at " + now.toLocaleTimeString();
 
@@ -243,8 +272,7 @@ async function renderTable(){
   // If admin, don't load employee table
   if(isAdmin) return;
 
-  const response = await fetch("/api/attendance");
-  const records = await response.json();
+  const records = await fetchAttendanceRecords();
 
   console.log("Attendance data:", records);
 
@@ -291,8 +319,7 @@ function showAdminTab(tab){
 // Load employees into dropdown
 async function loadAdminEmployeeDropdown(){
 
-  const res = await fetch("/api/employees");
-  const employees = await res.json();
+  const employees = await fetchEmployees();
 
   const markSelect = document.getElementById("adminEmployeeSelect");
   const monthlySelect = document.getElementById("monthlyEmployeeSelect");
@@ -316,7 +343,7 @@ async function loadAdminEmployeeDropdown(){
 
 }
 
-function submitAdminAttendance(){
+async function submitAdminAttendance(){
 
   const employee = document.getElementById("adminEmployeeSelect").value;
   const date = document.getElementById("adminDate").value;
@@ -329,28 +356,22 @@ function submitAdminAttendance(){
     return;
   }
 
-  let records = JSON.parse(localStorage.getItem("attendanceRecords")) || [];
-
-  // Prevent duplicate entry for same employee & date
-  const exists = records.find(r =>
-      r.employee === employee && r.date === date
-  );
+  const normalizedDate = formatInputDateToDisplay(date);
+  const records = await fetchAttendanceRecords();
+  const exists = records.find(r => r.employee === employee && r.date === normalizedDate);
 
   if(exists){
     alert("Attendance already marked for this employee on this date.");
     return;
   }
 
-  records.push({
+  await saveAttendanceRecord({
     employee: employee,
-    date: date,
-    in: checkIn || "-",
-    out: checkOut || "-",
-    totalHours: "-",
+    date: normalizedDate,
+    check_in: checkIn || "-",
+    check_out: checkOut || "-",
     status: status
   });
-
-  localStorage.setItem("attendanceRecords", JSON.stringify(records));
 
   alert("Attendance saved successfully!");
 
@@ -369,18 +390,16 @@ async function loadDailyView(){
     return;
   }
 
-  const empRes = await fetch("/api/employees");
-  const employees = await empRes.json();
-
-  const attRes = await fetch("/api/attendance");
-  const records = await attRes.json();
+  const employees = await fetchEmployees();
+  const records = await fetchAttendanceRecords();
 
   tbody.innerHTML = "";
 
   employees.forEach(emp => {
 
+    const displayDate = formatInputDateToDisplay(date);
     const record = records.find(r =>
-        r.employee === emp.name && r.date === date
+        r.employee === emp.name && r.date === displayDate
     );
 
     let status = record ? record.status : "Absent";
@@ -406,8 +425,7 @@ async function loadMonthlyCalendar(){
     return;
   }
 
-  const res = await fetch("/api/attendance");
-  const records = await res.json();
+  const records = await fetchAttendanceRecords();
 
   const grid = document.getElementById("calendarGrid");
 
@@ -422,7 +440,7 @@ async function loadMonthlyCalendar(){
 
   for(let d=1; d<=daysInMonth; d++){
 
-    const fullDate = new Date(year, month, d).toLocaleDateString();
+    const fullDate = formatDisplayDate(new Date(year, month, d));
 
     const record = records.find(r =>
         r.employee === employee && r.date === fullDate
@@ -452,46 +470,6 @@ async function loadMonthlyCalendar(){
   document.getElementById("statHalf").innerText = half;
 }
 
-function adminMarkAttendance(){
-
-  const employee = document.getElementById("employeeSelect").value;
-  const date = document.getElementById("attendanceDate").value;
-  const status = document.getElementById("attendanceStatus").value;
-
-  if(!date){
-    alert("Please select date");
-    return;
-  }
-
-  let records = JSON.parse(localStorage.getItem("attendanceRecords")) || [];
-
-  // check if already marked for same date
-  const alreadyMarked = records.find(r =>
-      r.employee === employee && r.date === date
-  );
-
-  if(alreadyMarked){
-    alert("Attendance already marked for this employee on this date");
-    return;
-  }
-
-  records.push({
-    employee: employee,
-    date: date,
-    status: status,
-    in: "-",
-    out: "-",
-    totalHours: "-"
-  });
-
-  localStorage.setItem("attendanceRecords", JSON.stringify(records));
-
-  alert("Attendance marked successfully!");
-}
-
-
-
-
 // ================= EMPLOYEE RECENT TABLE =================
 // function renderTable(){
 
@@ -520,56 +498,3 @@ function adminMarkAttendance(){
 //   });
 // }
 
-
-function loadMonthlyCalendar(){
-
-  const employee = document.getElementById("monthlyEmployeeSelect").value;
-  const monthValue = document.getElementById("monthlySelect").value;
-
-  if(!employee || !monthValue){
-    alert("Select employee & month");
-    return;
-  }
-
-  const records = JSON.parse(localStorage.getItem("attendanceRecords")) || [];
-  const grid = document.getElementById("calendarGrid");
-
-  const date = new Date(monthValue);
-  const month = date.getMonth();
-  const year = date.getFullYear();
-  const daysInMonth = new Date(year, month+1, 0).getDate();
-
-  let present=0, absent=0, half=0;
-  grid.innerHTML="";
-
-  for(let d=1; d<=daysInMonth; d++){
-
-    const fullDate = new Date(year, month, d).toLocaleDateString();
-
-    const record = records.find(r =>
-        r.employee === employee && r.date === fullDate
-    );
-
-    let status = "Absent";
-    if(record) status = record.status;
-
-    if(status==="Present") present++;
-    if(status==="Absent") absent++;
-    if(status==="Half-day") half++;
-
-let borderClass = "status-absent-border"; // default
-
-if(status === "Present") borderClass = "status-present-border";
-if(status === "Half-day") borderClass = "status-half-border";
-
-grid.innerHTML += `
-  <div class="day-box ${borderClass}">
-    <b>${d}</b>
-  </div>
-`;
-  }
-
-  document.getElementById("statPresent").innerText = present;
-  document.getElementById("statAbsent").innerText = absent;
-  document.getElementById("statHalf").innerText = half;
-}
