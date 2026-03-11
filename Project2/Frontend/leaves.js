@@ -45,7 +45,7 @@ async function applyLeave(){
     return;
   }
 
-  const res = await fetch("http://127.0.0.1:8000/leaves",{
+  const res = await fetch("/api/leaves",{
     method:"POST",
     headers:{
       "Content-Type":"application/json"
@@ -212,7 +212,7 @@ function filterRequests(){
 
 async function approveLeave(id){
 
-  await fetch(`http://127.0.0.1:8000/leaves/${id}?status=Approved`,{
+  await fetch(`/api/leaves/${id}?status=Approved`,{
     method:"PUT"
   });
 
@@ -223,7 +223,7 @@ async function approveLeave(id){
 
 async function rejectLeave(id){
 
-  await fetch(`http://127.0.0.1:8000/leaves/${id}?status=Rejected`,{
+  await fetch(`/api/leaves/${id}?status=Rejected`,{
     method:"PUT"
   });
 
@@ -264,7 +264,7 @@ async function cancelLeave(id){
 
   if(!confirm("Cancel this leave request?")) return;
 
-  await fetch(`http://127.0.0.1:8000/leaves/${id}?status=Cancelled`,{
+  await fetch(`/api/leaves/${id}?status=Cancelled`,{
     method:"PUT"
   });
 
@@ -278,7 +278,7 @@ async function cancelLeave(id){
 
 async function calculateLeaveBalance(){
 
-  const res = await fetch("http://127.0.0.1:8000/leaves");
+  const res = await fetch("/api/leaves");
   const leaves = await res.json();
 
   const user = JSON.parse(localStorage.getItem("currentUser"));
@@ -320,10 +320,10 @@ async function calculateLeaveBalance(){
 
 async function renderEmployeeLeaveBalance(){
 
-  const empRes = await fetch("http://127.0.0.1:8000/employees");
+  const empRes = await fetch("/api/employees");
   const employees = await empRes.json();
 
-  const leaveRes = await fetch("http://127.0.0.1:8000/leaves");
+  const leaveRes = await fetch("/api/leaves");
   const leaves = await leaveRes.json();
 
   const tbody = document.getElementById("employeeBalanceBody");
@@ -374,7 +374,7 @@ async function renderEmployeeLeaveBalance(){
 //   tbody.innerHTML = "";
 
 //   // const leaves = JSON.parse(localStorage.getItem("leaveRequests")) || [];
-//   const res = await fetch("http://127.0.0.1:8000/leaves");
+//   const res = await fetch("/api/leaves");
 //   const leaves = await res.json();
 
 //   // Group leaves by employee
@@ -415,7 +415,7 @@ async function renderEmployeeLeaveBalance(){
 
 async function loadLeaves(){
 
-  const res = await fetch("http://127.0.0.1:8000/leaves");
+  const res = await fetch("/api/leaves");
 
   const data = await res.json();   // read response ONCE
 

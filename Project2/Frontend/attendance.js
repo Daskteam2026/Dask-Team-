@@ -176,7 +176,7 @@ document.getElementById("endTimeText").innerText =
 
   const today = new Date().toLocaleDateString();
 
-  await fetch("http://127.0.0.1:8000/attendance",{
+  await fetch("/api/attendance",{
   method:"POST",
   headers:{
     "Content-Type":"application/json"
@@ -209,7 +209,7 @@ document.getElementById("endTimeText").innerText = "--:--";
 // 👨‍💼 ADMIN TABLE
 // async function renderTable(){
 
-//   const response = await fetch("http://127.0.0.1:8000/attendance");
+//   const response = await fetch("/api/attendance");
 
 //   const records = await response.json();
 
@@ -243,7 +243,7 @@ async function renderTable(){
   // If admin, don't load employee table
   if(isAdmin) return;
 
-  const response = await fetch("http://127.0.0.1:8000/attendance");
+  const response = await fetch("/api/attendance");
   const records = await response.json();
 
   console.log("Attendance data:", records);
@@ -291,7 +291,7 @@ function showAdminTab(tab){
 // Load employees into dropdown
 async function loadAdminEmployeeDropdown(){
 
-  const res = await fetch("http://127.0.0.1:8000/employees");
+  const res = await fetch("/api/employees");
   const employees = await res.json();
 
   const markSelect = document.getElementById("adminEmployeeSelect");
@@ -369,10 +369,10 @@ async function loadDailyView(){
     return;
   }
 
-  const empRes = await fetch("http://127.0.0.1:8000/employees");
+  const empRes = await fetch("/api/employees");
   const employees = await empRes.json();
 
-  const attRes = await fetch("http://127.0.0.1:8000/attendance");
+  const attRes = await fetch("/api/attendance");
   const records = await attRes.json();
 
   tbody.innerHTML = "";
@@ -406,7 +406,7 @@ async function loadMonthlyCalendar(){
     return;
   }
 
-  const res = await fetch("http://127.0.0.1:8000/attendance");
+  const res = await fetch("/api/attendance");
   const records = await res.json();
 
   const grid = document.getElementById("calendarGrid");

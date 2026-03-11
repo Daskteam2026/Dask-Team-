@@ -72,7 +72,7 @@ async function register(){
 
   try{
 
-    const res = await fetch("http://127.0.0.1:8000/employees",{
+    const res = await fetch("/api/employees",{
       method:"POST",
       headers:{
         "Content-Type":"application/json"
@@ -117,7 +117,7 @@ async function login(){
 
   try{
 
-    const res = await fetch("http://127.0.0.1:8000/login",{
+    const res = await fetch("/api/login",{
       method:"POST",
       headers:{
         "Content-Type":"application/json"
