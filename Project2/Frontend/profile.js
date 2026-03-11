@@ -1,92 +1,118 @@
-// const currentUser = JSON.parse(localStorage.getItem("currentUser"));
-let users = JSON.parse(localStorage.getItem("users")) || [];
+let currentUser = JSON.parse(localStorage.getItem("currentUser"));
+let currentProfile = null;
+let profilePhoto = null;
 
-if(!currentUser){
-  window.location.href = "login.html";
+if (!currentUser) {
+  window.location.href = "home.html";
 }
 
-window.onload = function(){
+async function fetchEmployees() {
+  const response = await fetch("/api/employees");
+  return await response.json();
+}
 
-  document.getElementById("profileName").value = currentUser.name;
-  document.getElementById("profileEmail").value = currentUser.email;
+async function loadProfile() {
+  const employees = await fetchEmployees();
+  const employee = employees.find((item) => item.id === currentUser.id);
 
-  if(currentUser.department){
-    document.getElementById("profileDept").value = currentUser.department;
+  if (!employee) {
+    alert("Profile not found");
+    return;
   }
 
-  document.getElementById("roleBadge").innerText = currentUser.role;
+  currentProfile = employee;
 
-  if(currentUser.role === "Admin"){
+  document.getElementById("profileName").value = employee.name;
+  document.getElementById("profileEmail").value = employee.email;
+  document.getElementById("roleBadge").innerText = employee.role;
+  document.getElementById("navUser").innerText = employee.name;
+
+  if (employee.department) {
+    document.getElementById("profileDept").value = employee.department;
+  }
+
+  if (employee.role === "Admin") {
     document.getElementById("deptContainer").style.display = "none";
   }
 
-  document.getElementById("navUser").innerText = currentUser.name;
+  const navAvatar = document.getElementById("navAvatar");
+  navAvatar.innerText = employee.name[0];
 
- // 🔥 Get full user object (with photo) from users array
-const fullUser = users.find(u => u.email === currentUser.email);
-
-if(fullUser && fullUser.photo){
-  document.getElementById("profileImage").src = fullUser.photo;
-}else{
-  document.getElementById("profileImage").src = "default-avatar.png";
+  if (profilePhoto) {
+    document.getElementById("profileImage").src = profilePhoto;
+    navAvatar.innerHTML = `<img src="${profilePhoto}" class="sidebar-avatar-img">`;
+  } else {
+    document.getElementById("profileImage").src = "default-avatar.png";
+  }
 }
 
-const navAvatar = document.getElementById("navAvatar");
-
-if(fullUser && fullUser.photo){
-  navAvatar.innerHTML = `<img src="${fullUser.photo}" class="sidebar-avatar-img">`;
-}else{
-  navAvatar.innerText = currentUser.name[0];
-}
+window.onload = function () {
+  loadProfile();
 };
 
-document.getElementById("imageUpload").addEventListener("change", function(){
+document.getElementById("imageUpload").addEventListener("change", function () {
   const file = this.files[0];
+
+  if (!file) {
+    return;
+  }
+
   const reader = new FileReader();
 
-  reader.onload = function(e){
-    document.getElementById("profileImage").src = e.target.result;
+  reader.onload = function (event) {
+    profilePhoto = event.target.result;
+    document.getElementById("profileImage").src = profilePhoto;
   };
 
   reader.readAsDataURL(file);
 });
 
-function saveProfile(){
+async function saveProfile() {
+  if (!currentProfile) {
+    alert("Profile not loaded yet");
+    return;
+  }
 
-  const updatedName = document.getElementById("profileName").value;
-  const updatedEmail = document.getElementById("profileEmail").value;
-  const updatedDept = document.getElementById("profileDept")
-                      ? document.getElementById("profileDept").value
-                      : null;
+  const updatedName = document.getElementById("profileName").value.trim();
+  const updatedEmail = document.getElementById("profileEmail").value.trim();
+  const deptInput = document.getElementById("profileDept");
+  const updatedDept = deptInput ? deptInput.value.trim() : null;
 
-  const updatedPhoto = document.getElementById("profileImage").src;
-
-  let users = JSON.parse(localStorage.getItem("users")) || [];
-
-  // Update users array (store photo here)
-  users = users.map(user => {
-    if(user.email === currentUser.email){
-      return {
-        ...user,
-        name: updatedName,
-        email: updatedEmail,
-        department: updatedDept,
-        photo: updatedPhoto
-      };
-    }
-    return user;
+  const response = await fetch(`/api/employees/${currentProfile.id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      name: updatedName,
+      email: updatedEmail,
+      department: updatedDept || null
+    })
   });
 
-  // Update currentUser WITHOUT photo
-  currentUser.name = updatedName;
-  currentUser.email = updatedEmail;
-  currentUser.department = updatedDept;
+  if (!response.ok) {
+    const error = await response.json();
+    alert(error.detail || "Failed to update profile");
+    return;
+  }
 
-  // DO NOT store photo again in currentUser
-  delete currentUser.photo;
+  const updatedUser = await response.json();
 
-  localStorage.setItem("users", JSON.stringify(users));
+  currentUser = {
+    ...currentUser,
+    id: updatedUser.id,
+    name: updatedUser.name,
+    email: updatedUser.email,
+    role: updatedUser.role,
+    department: updatedUser.department
+  };
+
   localStorage.setItem("currentUser", JSON.stringify(currentUser));
+  document.getElementById("navUser").innerText = updatedUser.name;
+
+  if (!profilePhoto) {
+    document.getElementById("navAvatar").innerText = updatedUser.name[0];
+  }
 
   alert("Profile updated successfully!");
 }
