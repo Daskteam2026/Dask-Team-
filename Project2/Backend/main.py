@@ -126,7 +126,7 @@ from db_models import Attendance as AttendanceModel
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
-from schemas import Attendance, LoginRequest, LoginResponse, LeaveCreate, EmployeeCreate
+from schemas import Attendance, LoginRequest, LoginResponse, LeaveCreate, EmployeeCreate, EmployeeUpdate
 
 
 app = FastAPI()
@@ -198,6 +198,33 @@ def create_employee(data: EmployeeCreate, db: Session = Depends(get_db)):
 @app.get("/employees")
 def get_employees(db: Session = Depends(get_db)):
     return db.query(Employee).all()
+
+
+@app.put("/employees/{employee_id}", response_model=LoginResponse)
+def update_employee(employee_id: int, data: EmployeeUpdate, db: Session = Depends(get_db)):
+
+    employee = db.query(Employee).filter(Employee.id == employee_id).first()
+
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+
+    existing_email = (
+        db.query(Employee)
+        .filter(Employee.email == data.email, Employee.id != employee_id)
+        .first()
+    )
+
+    if existing_email:
+        raise HTTPException(status_code=400, detail="Email already in use")
+
+    employee.name = data.name
+    employee.email = data.email
+    employee.department = data.department
+
+    db.commit()
+    db.refresh(employee)
+
+    return employee
 
 
 # ---------------------------

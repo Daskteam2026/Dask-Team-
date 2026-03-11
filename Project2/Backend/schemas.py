@@ -71,6 +71,12 @@ class EmployeeCreate(BaseModel):
     password: str = Field(..., min_length=6, max_length=72)
 
 
+class EmployeeUpdate(BaseModel):
+    name: str
+    email: str
+    department: str | None = None
+
+
 # -----------------------
 # Login Request
 # -----------------------
