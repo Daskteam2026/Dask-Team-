@@ -1,4 +1,3 @@
-let currentUser = JSON.parse(localStorage.getItem("currentUser"));
 let currentProfile = null;
 let profilePhoto = null;
 
