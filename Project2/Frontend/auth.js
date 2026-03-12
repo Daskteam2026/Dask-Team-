@@ -1,17 +1,3 @@
-
-// Create default admin if not exists
-let users = JSON.parse(localStorage.getItem("users")) || [];
-
-if(!users.find(u => u.role === "Admin")){
-  users.push({
-    name: "Suraj",
-    email: "admin@dask.com",
-    pass: "admin123",
-    role: "Admin"
-  });
-  localStorage.setItem("users", JSON.stringify(users));
-}
-
 // Modal controls
 
 let selectedRole = "employee";
@@ -124,12 +110,14 @@ async function login(){
       },
       body:JSON.stringify({
         email: email,
-        password: pass
+        password: pass,
+        role: selectedRole === "admin" ? "Admin" : "Employee"
       })
     });
 
     if(!res.ok){
-      alert("Invalid credentials");
+      const error = await res.json().catch(() => null);
+      alert(error?.detail || "Invalid credentials");
       return;
     }
 

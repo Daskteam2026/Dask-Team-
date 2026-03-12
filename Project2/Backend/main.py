@@ -294,6 +294,12 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
     if user.password != data.password:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
+    requested_role = data.role.strip().lower()
+    actual_role = user.role.strip().lower()
+
+    if requested_role != actual_role:
+        raise HTTPException(status_code=403, detail="Use the correct login option for this account")
+
     return user
 
 
