@@ -26,6 +26,9 @@ function isAdminUser(){
 // const isAdmin = currentUser && currentUser.role === "Admin";
 
 function openLeaveModal(){
+  if (isAdminUser()) {
+    return;
+  }
   document.getElementById("leaveModal").style.display="flex";
 }
 
@@ -252,12 +255,20 @@ window.onload = async function(){
   // leaveRequests = JSON.parse(localStorage.getItem("leaveRequests")) || [];
 
   loadLeaves();
-   await calculateLeaveBalance();
+  await calculateLeaveBalance();
+
+  const applyLeaveBtn = document.getElementById("applyLeaveBtn");
+  const emptyStateAddRequestBtn = document.getElementById("emptyStateAddRequestBtn");
+
+  if (isAdmin) {
+    if (applyLeaveBtn) applyLeaveBtn.style.display = "none";
+    if (emptyStateAddRequestBtn) emptyStateAddRequestBtn.style.display = "none";
+  }
 
   if(isAdmin){
    document.getElementById("adminBalanceTable").style.display = "block";
    await renderEmployeeLeaveBalance();
-}
+  }
 };
 
 async function cancelLeave(id){

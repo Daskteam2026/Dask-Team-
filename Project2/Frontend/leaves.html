@@ -70,7 +70,7 @@
 
 <!-- Top Actions -->
 <div class="leave-topbar">
- <button class="apply-leave-btn" onclick="openLeaveModal()">+ Apply Leave</button>
+ <button id="applyLeaveBtn" class="apply-leave-btn" onclick="openLeaveModal()">+ Apply Leave</button>
 </div>
 
 <!-- MAIN CARD -->
@@ -80,7 +80,7 @@
     <img src="images/empty.png" class="empty-img">
     <h3>No Leave Requests Yet</h3>
     <p>Start by applying for your first leave.</p>
-    <button class="primary-btn" onclick="openLeaveModal()">Add Request</button>
+    <button id="emptyStateAddRequestBtn" class="primary-btn" onclick="openLeaveModal()">Add Request</button>
   </div>
 
   <!-- Leave Table (Hidden initially) -->
