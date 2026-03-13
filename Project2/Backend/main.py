@@ -185,7 +185,8 @@ def create_employee(data: EmployeeCreate, db: Session = Depends(get_db)):
         department=data.department,
         role=data.role,
         salary=data.salary,
-        password=data.password
+        password=data.password,
+        photo=None
     )
 
     db.add(new_emp)
@@ -220,6 +221,7 @@ def update_employee(employee_id: int, data: EmployeeUpdate, db: Session = Depend
     employee.name = data.name
     employee.email = data.email
     employee.department = data.department
+    employee.photo = data.photo
 
     db.commit()
     db.refresh(employee)

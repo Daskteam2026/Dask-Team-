@@ -1,11 +1,8 @@
 function loadSidebarProfile(){
 
   const currentUser = JSON.parse(localStorage.getItem("currentUser"));
-  const users = JSON.parse(localStorage.getItem("users")) || [];
 
   if(!currentUser) return;
-
-  const fullUser = users.find(u => u.email === currentUser.email);
 
   const navAvatar = document.getElementById("navAvatar");
   const navUser = document.getElementById("navUser");
@@ -15,8 +12,8 @@ function loadSidebarProfile(){
   }
 
   if(navAvatar){
-    if(fullUser && fullUser.photo){
-      navAvatar.innerHTML = `<img src="${fullUser.photo}" class="sidebar-avatar-img">`;
+    if(currentUser.photo){
+      navAvatar.innerHTML = `<img src="${currentUser.photo}" class="sidebar-avatar-img">`;
     }else{
       navAvatar.innerText = currentUser.name[0];
     }

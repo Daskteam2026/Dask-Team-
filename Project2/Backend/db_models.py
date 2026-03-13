@@ -10,7 +10,8 @@ class Employee(Base):
     department = Column(String)
     role = Column(String, nullable=False)
     salary = Column(Integer)  
-    password = Column(String, nullable=False) 
+    password = Column(String, nullable=False)
+    photo = Column(String, nullable=True)
 
 
 class Holiday(Base):

@@ -37,6 +37,8 @@ async function loadProfile() {
   const navAvatar = document.getElementById("navAvatar");
   navAvatar.innerText = employee.name[0];
 
+  profilePhoto = employee.photo || null;
+
   if (profilePhoto) {
     document.getElementById("profileImage").src = profilePhoto;
     navAvatar.innerHTML = `<img src="${profilePhoto}" class="sidebar-avatar-img">`;
@@ -85,7 +87,8 @@ async function saveProfile() {
     body: JSON.stringify({
       name: updatedName,
       email: updatedEmail,
-      department: updatedDept || null
+      department: updatedDept || null,
+      photo: profilePhoto
     })
   });
 
@@ -103,13 +106,16 @@ async function saveProfile() {
     name: updatedUser.name,
     email: updatedUser.email,
     role: updatedUser.role,
-    department: updatedUser.department
+    department: updatedUser.department,
+    photo: updatedUser.photo || null
   };
 
   localStorage.setItem("currentUser", JSON.stringify(currentUser));
   document.getElementById("navUser").innerText = updatedUser.name;
 
-  if (!profilePhoto) {
+  if (updatedUser.photo) {
+    document.getElementById("navAvatar").innerHTML = `<img src="${updatedUser.photo}" class="sidebar-avatar-img">`;
+  } else {
     document.getElementById("navAvatar").innerText = updatedUser.name[0];
   }
 

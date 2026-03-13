@@ -75,6 +75,7 @@ class EmployeeUpdate(BaseModel):
     name: str
     email: str
     department: str | None = None
+    photo: str | None = None
 
 
 # -----------------------
@@ -95,3 +96,4 @@ class LoginResponse(BaseModel):
     email: str
     role: str
     department: str
+    photo: str | None = None
