@@ -395,7 +395,9 @@ async function loadDailyView(){
 
   tbody.innerHTML = "";
 
-  employees.forEach(emp => {
+  employees
+  .filter(emp => emp.role === "Employee")
+  .forEach(emp => {
 
     const displayDate = formatInputDateToDisplay(date);
     const record = records.find(r =>
