@@ -158,7 +158,15 @@ async function saveProfile() {
 
     if (!response.ok) {
       const error = await response.json().catch(() => null);
-      alert(error?.detail || "Failed to update profile");
+      let errorMessage = "Failed to update profile";
+
+      if (typeof error?.detail === "string") {
+        errorMessage = error.detail;
+      } else if (Array.isArray(error?.detail) && error.detail.length > 0) {
+        errorMessage = error.detail[0]?.msg || errorMessage;
+      }
+
+      alert(errorMessage);
       return;
     }
 
