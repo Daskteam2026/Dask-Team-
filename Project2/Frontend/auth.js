@@ -117,7 +117,15 @@ async function login(){
 
     if(!res.ok){
       const error = await res.json().catch(() => null);
-      showAlert(error?.detail || "Invalid credentials", "error");
+      let errorMessage = "Invalid credentials";
+
+      if (typeof error?.detail === "string") {
+        errorMessage = error.detail;
+      } else if (Array.isArray(error?.detail) && error.detail.length > 0) {
+        errorMessage = error.detail[0]?.msg || errorMessage;
+      }
+
+      showAlert(errorMessage, "error");
       return;
     }
 
