@@ -172,7 +172,7 @@ async function saveProfile() {
 
     const updatedUser = await response.json();
 
-    currentUser = {
+    const nextCurrentUser = {
       ...currentUser,
       id: updatedUser.id,
       name: updatedUser.name,
@@ -182,7 +182,7 @@ async function saveProfile() {
       photo: updatedUser.photo || null
     };
 
-    localStorage.setItem("currentUser", JSON.stringify(currentUser));
+    localStorage.setItem("currentUser", JSON.stringify(nextCurrentUser));
     document.getElementById("navUser").innerText = updatedUser.name;
 
     if (updatedUser.photo) {
