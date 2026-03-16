@@ -52,7 +52,7 @@ async function register(){
   const department = document.getElementById("department").value;
 
   if(!name || !email || !pass || !department){
-    alert("Please fill all fields");
+    showAlert("Please fill all fields", "warning");
     return;
   }
 
@@ -74,18 +74,18 @@ async function register(){
     });
 
     if(!res.ok){
-      alert("Registration failed");
+      showAlert("Registration failed", "error");
       return;
     }
 
-    alert("Registration successful!");
+    showAlert("Registration successful!", "success");
 
     closeModal();
     showLogin();
 
   }catch(err){
     console.error(err);
-    alert("Server error");
+    showAlert("Server error", "error");
   }
 
 }
@@ -97,7 +97,7 @@ async function login(){
   const pass = document.getElementById("loginPass").value;
 
   if(!email || !pass){
-    alert("Enter email and password");
+    showAlert("Enter email and password", "warning");
     return;
   }
 
@@ -117,7 +117,7 @@ async function login(){
 
     if(!res.ok){
       const error = await res.json().catch(() => null);
-      alert(error?.detail || "Invalid credentials");
+      showAlert(error?.detail || "Invalid credentials", "error");
       return;
     }
 
@@ -130,7 +130,7 @@ async function login(){
 
   }catch(err){
     console.error(err);
-    alert("Server error");
+    showAlert("Server error", "error");
   }
 
 }
